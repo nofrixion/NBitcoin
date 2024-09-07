@@ -1,0 +1,31 @@
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger the workflow when a new version tag is pushed
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build the project
+      run: dotnet build --configuration Release ./NBitcoin.Altcoins/NBitcoin.Altcoins.csproj  --no-restore --framework net6.0
+
+    - name: Pack the project
+      run: dotnet pack --configuration Release ./NBitcoin.Altcoins/NBitcoin.Altcoins.csproj --no-build --output ./output
+
+    - name: Publish to GitHub Packages
+      run: dotnet nuget push ./output/*.nupkg --api-key ${{ secrets.GH_PACKAGES_TOKEN }} --source https://nuget.pkg.github.com/nofrixion/index.json
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Optional, for GitHub authentication
